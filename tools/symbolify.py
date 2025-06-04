@@ -1,5 +1,5 @@
-#!/usr/bin/env python
-from subprocess import Popen, PIPE, call
+#!/usr/bin/env python3
+from subprocess import Popen, PIPE
 import re
 import sys
 import os
@@ -10,9 +10,9 @@ NM_FORMAT = "([0-9a-f]+) ([UuAaTtDdBbCcSsIi]) (.*)"
 
 nm_re = re.compile(NM_FORMAT)
 
-def parse_nm_output(str):
-    "returns (start, type, name)"
-    m = nm_re.match(str)
+def parse_nm_output(line):
+    """Return tuple ``(start, type, name)`` parsed from an ``nm`` output line."""
+    m = nm_re.match(line)
     if m:
         start = int(m.group(1), 16)
         return (start, m.group(2), m.group(3))
@@ -30,8 +30,8 @@ class SymbolLookup:
         self.symbols = [parse_nm_output(l) for l in nm(file)]
         self.symbols.sort(key=lambda x: x[0])
 
-    def padded(self, str):
-        return ("%%%ds" % self.min_width) % str
+    def padded(self, text):
+        return ("%%%ds" % self.min_width) % text
 
     def __call__(self, saddr):
         addr = int(saddr.group(0), 16)
@@ -52,18 +52,15 @@ class SymbolLookup:
             return saddr.group(0)
         return self.padded("<%s>+%x" % (last[2], addr - last[0]))
 
-def symbolify(objfile, input, *args, **kargs):
+def symbolify(objfile, stream, *args, **kargs):
     replacer = SymbolLookup(objfile, *args, **kargs)
-    for l in input:
-        print re.sub("(0x)?[0-9a-f]{6,16}", replacer, l),
+    for l in stream:
+        print(re.sub("(0x)?[0-9a-f]{6,16}", replacer, l), end="")
 
 
 def usage():
-    
-    print "usage: %s [filename] [slide]" % sys.argv[0]
-    print "\tor speficy a filename in your SYMBOLIFY_KERNEL environment variable"
-
-    # die now
+    print("usage: %s [filename] [slide]" % sys.argv[0])
+    print("\tor speficy a filename in your SYMBOLIFY_KERNEL environment variable")
     sys.exit(1)
 
 KERNEL_FILE = None
@@ -83,7 +80,7 @@ if( KERNEL_FILE is None ):
 if( KERNEL_FILE is None ):
     usage()
 
-print "using kernel file '%s', slide 0x%x" % (KERNEL_FILE, SLIDE)
+print("using kernel file '%s', slide 0x%x" % (KERNEL_FILE, SLIDE))
 
 symbolify(KERNEL_FILE, sys.stdin, min_width=40)
 
