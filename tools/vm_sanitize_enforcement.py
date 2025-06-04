@@ -112,7 +112,8 @@ def main():
 			return ERROR
 		header = filename[:-1] + "h"
 
-		are_safe_types_used = are_safe_types_used_in_file(header)
+		if are_safe_types_used_in_file(header):
+			are_safe_types_used = True
 
 	if are_safe_types_used:
 		print_error("{}: {}".format(sys.argv[0], error_help_message))
